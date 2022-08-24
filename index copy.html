@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)https://mcbeeringi.github.io/apps/mc/poly.html -->
+<html lang="en" dir="ltr">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <title>func2writeASM</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+
+<script type="text/javascript" src="jquery-1.9.1.js"></script>
+
+<body>
+
+    <style>
+        :root,
+        textarea,
+        input {
+            padding: 4px;
+            background-color: #222;
+            color: #fff;
+            font-family: menlo, monospace;
+        }
+
+        .box {
+            background-color: #333;
+            padding: 4px;
+        }
+
+        a:link,
+        a:visited {
+            color: #aef;
+        }
+
+        a:link:hover {
+            color: #8af;
+        }
+
+        a:link:active {
+            color: #48f;
+        }
+
+        h1,
+        h2 {
+            padding: 0rem 1rem;
+            border-left: 4px solid #000;
+        }
+
+        textarea {
+            background-color: #0000;
+            line-height: 14px;
+            min-height: 192px;
+            width: calc(100% - 8px);
+            overflow: hidden;
+            resize: none;
+            outline: none;
+            overflow-y: scroll;
+        }
+
+        .error {
+            background-color: #222;
+            color: rgb(255, 0, 0);
+            font-family: menlo, monospace;
+        }
+
+        #log {
+            line-height: 14px;
+            max-height: 448px;
+            overflow: scroll;
+            background-color: #333;
+        }
+
+        input:not([type=checkbox]) {
+            background-color: #0000;
+            display: inline-block;
+            border: none;
+            border-bottom: 2px solid #888;
+            border-radius: 0;
+            min-width: 20em;
+            max-width: 100%;
+            outline: none;
+            transition: .2s;
+        }
+
+
+        button {}
+
+        .frame {
+            border-style: solid;
+            border-color: rgb(0, 0, 0);
+            border-width: 0px 0px 1px 1px;
+            padding: 10px 0 10px 10px;
+            border-right: none;
+            margin-right: 0px;
+        }
+
+        @font-face {
+            font-family: 'nicokaku';
+            src: url(nicokaku_v1.ttf);
+        }
+    </style>
+
+
+    <h1>func2writeASM</h1>
+    <div class="">
+        <iframe width="1270" src="http://192.168.10.105:5501/index%20copy.html" frameborder="1"></iframe>
+
+        <div class="box">
+            <h2>いんふぉめーしょん</h2>
+            <br>cafeコードのasmを関数として展開する奴<br>
+            <br>
+            <textarea name="resultt" id="" cols="30" rows="6" hidden=true></textarea>
+        </div>
+        <br>
+        <div class="box">
+            <h2>settings</h2>
+            <br>展開するアドレス<br>
+            <input id=addr><br>
+            <br>
+            <textarea name="resultt" id="" cols="30" rows="6" hidden=true></textarea>
+            ついでにふっく<input type="checkbox" id=ishooking checked onchange="showhookmenu()"></input>
+            <br>
+            <div id=hookmenu>
+                フックするアドレス
+                <br>
+                <input id=hookaddr class=error onchange="isCorrectaddress()"><br>
+            </div>
+        </div>
+        <br>
+        <div class="box">
+            <button onclick="conv()">convert</button>
+            <button onclick="resetAddrstorage()">address reset</button>
+            <table border="1" cellpadding="5" cellspacing="0" bgcolor="#222" style="width: calc(100% - 8px);">
+                <tbody>
+                    <tr>
+                        <td>Input</td>
+                        <td>Output</td>
+                    </tr>
+                    <tr>
+                        <td><textarea id=input wrap="off" rows=40 spellcheck="false"></textarea></td>
+                        <td><textarea id=out wrap="off" rows=40 spellcheck="false"></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+<script>
+    window.onload = function () {
+        if(localStorage.addr==null){
+            alert("初回")
+            addr.value=(`0x${zeroPadding(Number(0x3f00000).toString(16),8)}`);
+        }else{
+            addr.value=(`0x${zeroPadding(Number(localStorage.addr).toString(16),8)}`);
+        }
+    }
+
+    addr.addEventListener('change', (event) => {
+        if ((/^0x[0-9a-fA-F]{8}$/).test(addr.value)) {
+            addr.className = null;
+        } else {
+            addr.className = "error";
+        }
+    });
+
+    function showhookmenu(){
+        if(ishooking.checked){
+            hookmenu.style.display = "inline";
+        }else{
+            hookmenu.style.display = "none";
+        }
+    }
+
+    function isCorrectaddress(){
+        if ((/^0x[0-9a-fA-F]{8}$/).test(hookaddr.value)) {
+            hookaddr.className = null;
+        } else {
+            hookaddr.className = "error";
+        }
+    }
+
+    // Enterキー押下時
+    window.document.onkeydown = function (event) {
+        if (event.key === 'Enter') {
+            conv();
+        }
+    }
+
+    function manualLowercase(s) {
+        return s.replace(/[A-Z]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) | 32); });
+    };
+    function manualUppercase(s) {
+        return s.replace(/[a-z]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) & ~32); });
+    };
+
+    function zeroPadding(NUM, LEN) {
+        return (Array(LEN).join('0') + NUM).slice(-LEN);
+    }
+
+    function resetAddrstorage(){
+        localStorage.addr=0x3f00000;
+        addr.value=(`0x${zeroPadding(Number(localStorage.addr).toString(16),8)}`);
+    }
+
+    function conv() {
+        if (addr.className == "error") return alert("開始アドレスが不正です");
+        let addres=Number(addr.value);
+        let funcaddr=addres;
+        out.value = input.value.replace(/[\s-\n]/g, '');
+        let ops = out.value.match(/.[0-9a-fA-F]{7}/g);
+
+        ops.shift();
+        ops.shift();
+
+        out.value="";
+        for(let op of ops){
+            out.value+=`${zeroPadding(addres.toString(16),8)} ${op}\n`;
+            addres+=4;
+        }
+        if(ishooking.checked){
+            if (hookaddr.className == "error") return alert("フックアドレスが不正です");
+            let hookaddress=Number(hookaddr.value);
+            console.log("fuck");;
+            let t = (zeroPadding(funcaddr.toString(16),8)).match(/.[0-9a-fA-F]{3}/g);
+            let hookingaddr = addres;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 4E800421----------\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 3DA0${t[0]}\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 61AD${t[1]}\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 7DA903A6\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 4E800421\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(addres.toString(16),8)} 4${(0xc000000-(addres-(hookaddress+4))).toString(16)}\n`;
+            addres+=4;
+            out.value+=`${zeroPadding(hookaddress.toString(16),8)} 4${(0x8000000+(hookingaddr-hookaddress)).toString(16)}\n`;
+        }
+        localStorage.setItem("addr",addres+4);
+        //addr.value=(`0x${zeroPadding(Number(localStorage.addr).toString(16),8)}`);
+    }
+</script>
+
+</html>
+
+9421FFE83D2043303C638000912100083D2059809061000C61290004C821000891210008C001000838210018FC210028FC2008184E800020
+9421FFE83D2043303C638000912100083D2059809061000C61290004C821000891210008C001000838210018FC210028FC2008184E800020
